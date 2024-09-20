@@ -15,10 +15,10 @@ const rateLimit = new Ratelimit({
 });
 
 export async function POST(request) {
-    const { iOSDeviceToken, watchOSDeviceToken, title, body, doNotSaveMyAlert } = await request.json();
+    const { iOSDeviceToken, watchOSDeviceToken, macOSDeviceToken, title, body, doNotSaveMyAlert } = await request.json();
 
     // At least one device token is required
-    if (!iOSDeviceToken && !watchOSDeviceToken) {
+    if (!iOSDeviceToken && !watchOSDeviceToken && !macOSDeviceToken) {
         return NextResponse.json({ message: 'Missing device token' }, { status: 400 });
     }
 
@@ -32,9 +32,14 @@ export async function POST(request) {
         return NextResponse.json({ message: 'Invalid watchOS device token' }, { status: 400 });
     }
 
+    // Validate macOS device token
+    if (macOSDeviceToken && macOSDeviceToken.length != 64) {
+        return NextResponse.json({ message: 'Invalid macOS device token' }, { status: 400 });
+    }
+
     // Rate limit alerts to iOS device
     if (iOSDeviceToken) {
-        const { success } = await rateLimit.limit(`rl-${iOSDeviceToken}`);
+        const { success } = await rateLimit.limit(`iOS-${iOSDeviceToken}`);
         if (!success) {
             NextResponse.json({ message: 'Too many requests' }, { status: 429 });
         }
@@ -42,7 +47,15 @@ export async function POST(request) {
 
     // Rate limit alerts to watchOS device
     if (watchOSDeviceToken) {
-        const { success } = await rateLimit.limit(`rl-${watchOSDeviceToken}`);
+        const { success } = await rateLimit.limit(`watchOS-${watchOSDeviceToken}`);
+        if (!success) {
+            NextResponse.json({ message: 'Too many requests' }, { status: 429 });
+        }
+    }
+
+    // Rate limit alerts to macOS device
+    if (macOSDeviceToken) {
+        const { success } = await rateLimit.limit(`macOS-${macOSDeviceToken}`);
         if (!success) {
             NextResponse.json({ message: 'Too many requests' }, { status: 429 });
         }
@@ -109,6 +122,21 @@ export async function POST(request) {
             }
         }
 
+        // Send to macOS device
+        if (macOSDeviceToken) {
+            const bundleId = process.env.APNS_BUNDLE_ID_IOS;
+            const notification = new apn.Notification();
+            notification.pushType = 'alert';
+            notification.alert = alert;
+            notification.topic = bundleId;
+
+            const result = await apnProvider.send(notification, macOSDeviceToken);
+            if (result.failed.length > 0) {
+                console.error('Error sending macOS push notification:', result.failed[0].response);
+                return NextResponse.json({ message: 'Failed to send macOS push notification' }, { status: 500 });
+            }
+        }
+
         // Shutdown APNs provider
         apnProvider.shutdown();
 
@@ -124,7 +152,7 @@ export async function POST(request) {
             }
         }
 
-        return NextResponse.json({ message: 'Push notification sent and saved successfully' }, { status: 200 });
+        return NextResponse.json({ message: 'Success' }, { status: 200 });
     } catch (error) {
         console.error('Error sending and saving push notification:', error);
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
