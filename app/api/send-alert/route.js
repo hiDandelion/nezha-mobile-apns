@@ -99,6 +99,7 @@ export async function POST(request) {
             notification.pushType = 'alert';
             notification.alert = alert;
             notification.topic = bundleId;
+            notification.mutableContent = true;
 
             const result = await apnProvider.send(notification, iOSDeviceToken);
             if (result.failed.length > 0) {
@@ -114,6 +115,7 @@ export async function POST(request) {
             notification.pushType = 'alert';
             notification.alert = alert;
             notification.topic = bundleId;
+            notification.mutableContent = true;
 
             const result = await apnProvider.send(notification, watchOSDeviceToken);
             if (result.failed.length > 0) {
@@ -129,6 +131,7 @@ export async function POST(request) {
             notification.pushType = 'alert';
             notification.alert = alert;
             notification.topic = bundleId;
+            notification.mutableContent = true;
 
             const result = await apnProvider.send(notification, macOSDeviceToken);
             if (result.failed.length > 0) {
