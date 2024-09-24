@@ -3,6 +3,7 @@ import { Redis } from '@upstash/redis';
 import { Ratelimit } from "@upstash/ratelimit";
 import path from 'path';
 import apn from '@parse/node-apn';
+import { v4 as uuidv4 } from 'uuid';
 
 const redis = new Redis({
     url: process.env.REDIS_URL,
@@ -72,6 +73,12 @@ export async function POST(request) {
         body: body
     }
 
+    // Create payload object
+    const payload = {
+        uuid: uuidv4(),
+        timestamp: new Date().getTime
+    }
+
     // Get Key Info
     const keyName = process.env.APNS_KEY_NAME;
     const keyPath = path.resolve(process.cwd(), 'private', keyName);
@@ -100,6 +107,7 @@ export async function POST(request) {
             notification.alert = alert;
             notification.topic = bundleId;
             notification.mutableContent = true;
+            notification.payload = payload;
 
             const result = await apnProvider.send(notification, iOSDeviceToken);
             if (result.failed.length > 0) {
@@ -116,6 +124,7 @@ export async function POST(request) {
             notification.alert = alert;
             notification.topic = bundleId;
             notification.mutableContent = true;
+            notification.payload = payload;
 
             const result = await apnProvider.send(notification, watchOSDeviceToken);
             if (result.failed.length > 0) {
@@ -132,6 +141,7 @@ export async function POST(request) {
             notification.alert = alert;
             notification.topic = bundleId;
             notification.mutableContent = true;
+            notification.payload = payload;
 
             const result = await apnProvider.send(notification, macOSDeviceToken);
             if (result.failed.length > 0) {
