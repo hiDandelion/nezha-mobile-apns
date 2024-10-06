@@ -104,6 +104,7 @@ export async function POST(request) {
             const bundleId = process.env.APNS_BUNDLE_ID_IOS;
             const notification = new apn.Notification();
             notification.pushType = 'alert';
+            notification.sound = 'default';
             notification.alert = alert;
             notification.topic = bundleId;
             notification.mutableContent = true;
@@ -121,6 +122,7 @@ export async function POST(request) {
             const bundleId = process.env.APNS_BUNDLE_ID_WATCHOS;
             const notification = new apn.Notification();
             notification.pushType = 'alert';
+            notification.sound = 'default';
             notification.alert = alert;
             notification.topic = bundleId;
             notification.mutableContent = true;
@@ -138,6 +140,7 @@ export async function POST(request) {
             const bundleId = process.env.APNS_BUNDLE_ID_IOS;
             const notification = new apn.Notification();
             notification.pushType = 'alert';
+            notification.sound = 'default';
             notification.alert = alert;
             notification.topic = bundleId;
             notification.mutableContent = true;
