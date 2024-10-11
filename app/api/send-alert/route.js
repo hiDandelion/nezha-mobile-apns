@@ -16,7 +16,7 @@ const rateLimit = new Ratelimit({
 });
 
 export async function POST(request) {
-    const { iOSDeviceToken, watchOSDeviceToken, macOSDeviceToken, title, body, doNotSaveMyAlert } = await request.json();
+    const { iOSDeviceToken, watchOSDeviceToken, macOSDeviceToken, title, body } = await request.json();
 
     // At least one device token is required
     if (!iOSDeviceToken && !watchOSDeviceToken && !macOSDeviceToken) {
@@ -155,18 +155,6 @@ export async function POST(request) {
 
         // Shutdown APNs provider
         apnProvider.shutdown();
-
-        // Save alert object for retrieval
-        if (!doNotSaveMyAlert) {
-            const alertToSave = {
-                ...alert,
-                timestamp: new Date().getTime()
-            }
-            // Currently you can only retrive iOS messages from iOS App
-            if (iOSDeviceToken) {
-                await redis.rpush(iOSDeviceToken, alertToSave);
-            }
-        }
 
         return NextResponse.json({ message: 'Success' }, { status: 200 });
     } catch (error) {
